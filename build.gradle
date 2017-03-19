@@ -1,0 +1,20 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'thangle.emailtracker.MainView'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+version = '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.google.api-client:google-api-client:1.22.0'
+    compile 'com.google.oauth-client:google-oauth-client-jetty:1.22.0'
+    compile 'com.google.apis:google-api-services-gmail:v1-rev62-1.22.0'
+    compile group: 'com.sun.mail', name: 'javax.mail', version: '1.5.6'
+    compile group: 'org.apache.derby', name: 'derby', version: '10.13.1.1'
+    compile group: 'com.jgoodies', name: 'jgoodies-forms', version: '1.6.0'
+}
