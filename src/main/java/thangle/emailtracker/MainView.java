@@ -5,7 +5,11 @@ import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 
+import java.io.File;
+import java.util.HashSet;
+
 import javax.swing.BoxLayout;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -21,7 +25,11 @@ import com.jgoodies.forms.builder.PanelBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 
+import thangle.emailtracker.utils.FileObjectStream;
+
 public class MainView {
+    private static final File DATA_FILE = new File(
+            System.getProperty("user.home"), ".credentials/email-tracker/email_list");
 
     private JFrame frame;
     private JTextArea recipients, body;
@@ -65,18 +73,31 @@ public class MainView {
         
         // create necessary buttons
         JButton sendBtn = new JButton("Send");
-        JButton plusBtn = makeSquareButton("+", 30, 30);
-        JButton minusBtn = makeSquareButton("-", 30, 30);
+        JButton plusBtn = makeSquareButton("+", 30);
+        JButton minusBtn = makeSquareButton("-", 30);
         
         // Cell 1: panel for displaying email list
-        String[] data = {"Thang", "Dat"};
+        
+        /*
+         * Retrieve the email data list and make a DefaultListModel, which can
+         * automatically update view when changed.
+         */
+        DefaultListModel<String> dataList = new DefaultListModel<>();
+        
+        if (DATA_FILE.exists()) {
+            @SuppressWarnings("unchecked")
+            HashSet<String> dataSet = (HashSet<String>)FileObjectStream.readData(DATA_FILE);
+            dataSet.forEach(e -> {
+                dataList.addElement(e);
+            });
+        }
         
         JPanel listPane = new JPanel();
         listPane.setLayout(new BoxLayout(listPane, BoxLayout.Y_AXIS));
         
-        JList<Object> list = new JList<Object>(data);
-        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        JScrollPane scrollPane = new JScrollPane(list);
+        JList<String> emailList = new JList<String>(dataList);
+        emailList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane scrollPane = new JScrollPane(emailList);
         
         JPanel btnPane = new JPanel(new FlowLayout(FlowLayout.LEFT));
         btnPane.add(plusBtn);
@@ -104,13 +125,20 @@ public class MainView {
         comPane.setBorder(new EmptyBorder(10, 10, 0, 0));
         
         // event handlers
-        plusBtn.addActionListener(e -> {
+        
+        /*
+         * When plus button is clicked, ask user for a new email address
+         * they want to add. Then, store that new email address in the data file.
+         */
+        plusBtn.addActionListener(event -> {
             String s = (String)JOptionPane.showInputDialog(
                                     frame,
                                     "Enter an email address:",
                                     "Add email address",
                                     JOptionPane.PLAIN_MESSAGE);
-            System.out.println(s);
+            
+            FileObjectStream.addData(DATA_FILE, s);
+            dataList.addElement(s);
         });
         
         // add components to frame
@@ -141,13 +169,12 @@ public class MainView {
     /**
      * Make a square button (for ex, add + and remove - buttons).
      * @param text the text displayed on the button
-     * @param w width of the button
-     * @param h height of the button
+     * @param dim width of the button
      * @return a square JButton
      */
-    private JButton makeSquareButton(String text, int w, int h) {
+    private JButton makeSquareButton(String text, int dim) {
         JButton btn = new JButton(text);
-        btn.setPreferredSize(new Dimension(w, h));
+        btn.setPreferredSize(new Dimension(dim, dim));
         return btn;
     }
 }
