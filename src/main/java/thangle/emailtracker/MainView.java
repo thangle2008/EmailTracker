@@ -4,7 +4,8 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.HashSet;
 
@@ -30,10 +31,14 @@ import thangle.emailtracker.utils.FileObjectStream;
 public class MainView {
     private static final File DATA_FILE = new File(
             System.getProperty("user.home"), ".credentials/email-tracker/email_list");
-
+    
+    // email data
+    private HashSet<String> myEmailList;
+    
     private JFrame frame;
     private JTextArea recipients, body;
     private JTextField subject;
+    private JButton sendBtn, plusBtn, minusBtn;
     
     /**
      * Launch the application.
@@ -55,6 +60,13 @@ public class MainView {
      * Create the application.
      */
     public MainView() {
+        // load store email list
+        if (DATA_FILE.exists()) {
+            @SuppressWarnings("unchecked")
+            HashSet<String> tmp = (HashSet<String>)FileObjectStream.readData(DATA_FILE);
+            myEmailList = tmp;
+        }
+        
         initialize();
     }
 
@@ -71,10 +83,10 @@ public class MainView {
         recipients = makeWrapTextArea(0, 0);
         body = makeWrapTextArea(10, 5);
         
-        // create necessary buttons
-        JButton sendBtn = new JButton("Send");
-        JButton plusBtn = makeSquareButton("+", 30);
-        JButton minusBtn = makeSquareButton("-", 30);
+        // initialize necessary buttons
+        sendBtn = new JButton("Send");
+        plusBtn = makeSquareButton("+", 30);
+        minusBtn = makeSquareButton("-", 30);
         
         // Cell 1: panel for displaying email list
         
@@ -82,20 +94,16 @@ public class MainView {
          * Retrieve the email data list and make a DefaultListModel, which can
          * automatically update view when changed.
          */
-        DefaultListModel<String> dataList = new DefaultListModel<>();
+        DefaultListModel<String> emailListModel = new DefaultListModel<>();
         
-        if (DATA_FILE.exists()) {
-            @SuppressWarnings("unchecked")
-            HashSet<String> dataSet = (HashSet<String>)FileObjectStream.readData(DATA_FILE);
-            dataSet.forEach(e -> {
-                dataList.addElement(e);
-            });
-        }
+        myEmailList.forEach(elt -> {
+            emailListModel.addElement(elt);
+        });
         
         JPanel listPane = new JPanel();
         listPane.setLayout(new BoxLayout(listPane, BoxLayout.Y_AXIS));
         
-        JList<String> emailList = new JList<String>(dataList);
+        JList<String> emailList = new JList<String>(emailListModel);
         emailList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(emailList);
         
@@ -107,22 +115,7 @@ public class MainView {
         listPane.add(btnPane);
         
         // Cell 2: create compose email form
-        FormLayout comLayout = new FormLayout(
-            "pref, 3dlu, pref:grow, 3dlu",
-            "pref, 3dlu, pref, 3dlu, default, 3dlu, pref");
-        PanelBuilder comBuilder = new PanelBuilder(comLayout);
-        CellConstraints cc = new CellConstraints();
-        
-        comBuilder.addLabel("To:", cc.xy(1, 1, "left, top"));
-        comBuilder.add(recipients, cc.xy(3, 1));
-        comBuilder.addLabel("Subject:", cc.xy(1, 3, "left, center"));
-        comBuilder.add(subject, cc.xy(3, 3));
-        comBuilder.addLabel("Body:", cc.xy(1, 5, "left, top"));
-        comBuilder.add(body, cc.xy(3, 5));
-        comBuilder.add(sendBtn, cc.xy(3, 7, "right, center"));
-        
-        JPanel comPane = comBuilder.getPanel();
-        comPane.setBorder(new EmptyBorder(10, 10, 0, 0));
+        JPanel comPane = buildFormPanel();
         
         // event handlers
         
@@ -137,14 +130,58 @@ public class MainView {
                                     "Add email address",
                                     JOptionPane.PLAIN_MESSAGE);
             
-            FileObjectStream.addData(DATA_FILE, s);
-            dataList.addElement(s);
+            if (!myEmailList.contains(s)) {
+                myEmailList.add(s);
+                emailListModel.addElement(s);
+            }
+        });
+        
+        /*
+         * Remove the email that is selected.
+         */
+        minusBtn.addActionListener(e -> {
+            String selectedEmail = emailList.getSelectedValue();
+            int selectedIndex = emailList.getSelectedIndex();
+            
+            if(selectedEmail != null) {
+                emailListModel.remove(selectedIndex);
+                myEmailList.remove(selectedEmail);
+            }
         });
         
         // add components to frame
         frame.getContentPane().add(listPane);
-        frame.getContentPane().add(comBuilder.getPanel());
+        frame.getContentPane().add(comPane);
+        
+        // save data when frame is closed
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent event) {
+                FileObjectStream.writeData(DATA_FILE, myEmailList);
+            }
+        });
+    }
+    
+    private JPanel buildFormPanel() {
+        FormLayout comLayout = new FormLayout(
+                "pref, 3dlu, pref:grow, 3dlu",
+                "pref, 3dlu, pref, 3dlu, default, 3dlu, pref");
+        PanelBuilder comBuilder = new PanelBuilder(comLayout);
+        CellConstraints cc = new CellConstraints();
+        
+        comBuilder.addLabel("To:", cc.xy(1, 1, "left, top"));
+        comBuilder.add(recipients, cc.xy(3, 1));
+        comBuilder.addLabel("Subject:", cc.xy(1, 3, "left, center"));
+        comBuilder.add(subject, cc.xy(3, 3));
+        comBuilder.addLabel("Body:", cc.xy(1, 5, "left, top"));
+        comBuilder.add(body, cc.xy(3, 5));
+        comBuilder.add(sendBtn, cc.xy(3, 7, "right, center"));
+        
+        JPanel comPane = comBuilder.getPanel();
+        comPane.setBorder(new EmptyBorder(10, 10, 0, 0));
+        
+        return comPane;
     }
     
     /**

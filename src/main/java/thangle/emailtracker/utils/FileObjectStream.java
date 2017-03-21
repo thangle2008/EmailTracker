@@ -49,39 +49,4 @@ public class FileObjectStream {
             e.printStackTrace();
         }
     }
-    
-    /**
-     * Add a new object to the data set stored in the file.
-     * @param file the file to write the new object
-     * @param o the new object
-     * @return a boolean indicating whether the object is added successfully
-     */
-    public static boolean addData(File file, Object o) {
-        if(file.isDirectory()) {
-            return false;
-        }
-        
-        HashSet<Object> data;
-        
-        // read the data (if it exists) and add new object
-        if(!file.exists()) {
-            data = new HashSet<Object>();
-            data.add(o);
-        }
-        else {
-            Object tmp = readData(file);
-            if (tmp == null || !(tmp instanceof HashSet<?>)) {
-                return false;
-            } else {
-                @SuppressWarnings("unchecked")
-                HashSet<Object> tmpData = (HashSet<Object>)tmp;
-                data = tmpData;
-                data.add(o);
-            }
-        }
-        
-        // write back the data
-        writeData(file, data);
-        return true;
-    }
 }
