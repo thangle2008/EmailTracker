@@ -27,6 +27,7 @@ import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 
 import thangle.emailtracker.utils.FileObjectStream;
+import thangle.emailtracker.api.*;
 
 public class MainView {
     private static final File DATA_FILE = new File(
@@ -147,6 +148,17 @@ public class MainView {
                 emailListModel.remove(selectedIndex);
                 myEmailList.remove(selectedEmail);
             }
+        });
+        
+        /*
+         * Send email to an address.
+         */
+        sendBtn.addActionListener(e -> {
+            String from = emailList.getSelectedValue();
+            String to = recipients.getText();
+            String subjectText = subject.getText();
+            String bodyText = body.getText();
+            MessageService.sendMessage(from, to, subjectText, bodyText);
         });
         
         // add components to frame

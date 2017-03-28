@@ -13,7 +13,7 @@ import com.google.api.services.gmail.model.*;
 
 import javax.mail.internet.InternetAddress;
 
-public class Main {
+public class MessageService {
     /**
      * Create a MimeMessage using the parameters provided.
      *
@@ -31,7 +31,7 @@ public class Main {
         Session session = Session.getDefaultInstance(props, null);
         
         MimeMessage email = new MimeMessage(session);
-        
+        email.setFrom(new InternetAddress(from));
         email.addRecipient(javax.mail.Message.RecipientType.TO, 
                 new InternetAddress(to));
         email.setSubject(subject);
@@ -80,15 +80,12 @@ public class Main {
         return message;
     }
     
-    public static void main(String[] args) {
+    public static void sendMessage(String from, String to, String subject, String body) {
         try {
-            Gmail service = GmailService.getGmailService();
-            String to = "amphale1996@gmail.com";
-
-            MimeMessage emailContent = createEmail(to, "", "test api", 
-                                                   "This is just a test.");
+            Gmail service = GmailService.getGmailService(from);
+            MimeMessage emailContent = createEmail(to, from, subject, body);
             System.out.println("sending message");
-            sendMessage(service, "me", emailContent);
+            sendMessage(service, from, emailContent);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (MessagingException e) {

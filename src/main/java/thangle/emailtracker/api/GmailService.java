@@ -61,7 +61,7 @@ public class GmailService {
      * @return an authorized Credential object.
      * @throws IOException
      */
-    public static Credential authorize() throws IOException {
+    public static Credential authorize(String userId) throws IOException {
         // Load client secrets.
         InputStream in =
             GmailService.class.getResourceAsStream("/client_secret.json");
@@ -76,7 +76,7 @@ public class GmailService {
                 .setAccessType("offline")
                 .build();
         Credential credential = new AuthorizationCodeInstalledApp(
-            flow, new LocalServerReceiver()).authorize("user");
+            flow, new LocalServerReceiver()).authorize(userId);
         System.out.println(
                 "Credentials saved to " + DATA_STORE_DIR.getAbsolutePath());
         return credential;
@@ -87,8 +87,8 @@ public class GmailService {
      * @return an authorized Gmail client service
      * @throws IOException
      */
-    public static Gmail getGmailService() throws IOException {
-        Credential credential = authorize();
+    public static Gmail getGmailService(String userId) throws IOException {
+        Credential credential = authorize(userId);
         return new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
