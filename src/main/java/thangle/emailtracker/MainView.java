@@ -26,6 +26,8 @@ import com.jgoodies.forms.builder.PanelBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 
+import org.apache.commons.validator.routines.EmailValidator;
+
 import thangle.emailtracker.utils.FileObjectStream;
 import thangle.emailtracker.api.*;
 
@@ -131,9 +133,13 @@ public class MainView {
                                     "Add email address",
                                     JOptionPane.PLAIN_MESSAGE);
             
-            if (!myEmailList.contains(s)) {
-                myEmailList.add(s);
-                emailListModel.addElement(s);
+            if(checkValidAddress(s)) {
+                if (!myEmailList.contains(s)) {
+                    myEmailList.add(s);
+                    emailListModel.addElement(s);
+                }
+            } else {
+                JOptionPane.showMessageDialog(frame, "The email address is not valid!");
             }
         });
         
@@ -225,5 +231,27 @@ public class MainView {
         JButton btn = new JButton(text);
         btn.setPreferredSize(new Dimension(dim, dim));
         return btn;
+    }
+    
+    /**
+     * Check if the email address is syntactically correct.
+     * Support gmail only.
+     * @param address the address to be checked 
+     * @return whether the email address is syntactically correct or not
+     */
+    private boolean checkValidAddress(String address) {
+        EmailValidator eValidator = EmailValidator.getInstance(false);
+        
+        // check if the address has valid format 
+        if (!eValidator.isValid(address))
+            return false;
+        
+        // check if the domain name is gmail
+        String domain = address.substring(address.lastIndexOf('@')+1);
+        if (!domain.equals("gmail.com")) {
+            return false;
+        }
+        
+        return true;
     }
 }

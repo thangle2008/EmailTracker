@@ -80,11 +80,18 @@ public class MessageService {
         return message;
     }
     
+    /**
+     * Send a message from an address to another.
+     * @param from the sender's address
+     * @param to the receiver's address
+     * @param subject the email's subject
+     * @param body the email's body message
+     */
     public static void sendMessage(String from, String to, String subject, String body) {
         try {
             Gmail service = GmailService.getGmailService(from);
             MimeMessage emailContent = createEmail(to, from, subject, body);
-            System.out.println("sending message");
+            
             sendMessage(service, from, emailContent);
         } catch (IOException e) {
             e.printStackTrace();

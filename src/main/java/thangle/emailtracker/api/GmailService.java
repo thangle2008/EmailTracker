@@ -58,6 +58,7 @@ public class GmailService {
 
     /**
      * Creates an authorized Credential object.
+     * @param userId the user to be authenticated
      * @return an authorized Credential object.
      * @throws IOException
      */
@@ -84,6 +85,7 @@ public class GmailService {
 
     /**
      * Build and return an authorized Gmail client service.
+     * @param the user of the client service
      * @return an authorized Gmail client service
      * @throws IOException
      */
