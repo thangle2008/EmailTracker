@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -69,6 +70,7 @@ public class MainView {
             HashSet<String> tmp = (HashSet<String>)FileObjectStream.readData(DATA_FILE);
             myEmailList = tmp;
         }
+        else myEmailList = new HashSet<String>();
         
         initialize();
     }
@@ -79,12 +81,12 @@ public class MainView {
     private void initialize() {
         // set up elements
         frame = new JFrame();
-        frame.setBounds(100, 100, 600, 800);
+        frame.setBounds(100, 100, 1080, 800);
         frame.getContentPane().setLayout(new GridLayout(1, 3));
         
         subject = new JTextField();
         recipients = makeWrapTextArea(0, 0);
-        body = makeWrapTextArea(10, 5);
+        body = makeWrapTextArea(20, 5);
         
         // initialize necessary buttons
         sendBtn = new JButton("Send");
@@ -230,6 +232,7 @@ public class MainView {
     private JButton makeSquareButton(String text, int dim) {
         JButton btn = new JButton(text);
         btn.setPreferredSize(new Dimension(dim, dim));
+        btn.setMargin(new Insets(0, 0, 0, 0));
         return btn;
     }
     
