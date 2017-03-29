@@ -45,8 +45,10 @@ public class MainView {
     
     // email data
     private HashSet<String> myEmailList;
+    private DefaultListModel<String> emailAddresses;
     private DefaultListModel<File> attachments;
     
+    // view components
     private JFrame frame;
     private JTextArea recipients, body;
     private JTextField subject;
@@ -72,6 +74,15 @@ public class MainView {
      * Create the application.
      */
     public MainView() {
+        initializeDataModels();
+        initializeViews();
+    }
+
+    
+    /**
+     * Initialize all data models.
+     */
+    private void initializeDataModels() {
         // load store email list
         if (DATA_FILE.exists()) {
             @SuppressWarnings("unchecked")
@@ -80,15 +91,22 @@ public class MainView {
         }
         else myEmailList = new HashSet<String>();
         
-        attachments = new DefaultListModel<>();
+        /*
+         * Retrieve the email data list and make a DefaultListModel, which can
+         * automatically update view when changed.
+         */
+        emailAddresses = new DefaultListModel<>();
+        myEmailList.forEach(elt -> {
+            emailAddresses.addElement(elt);
+        });
         
-        initialize();
+        attachments = new DefaultListModel<>();
     }
-
+    
     /**
      * Initialize the contents of the frame.
      */
-    private void initialize() {
+    private void initializeViews() {
         // set up elements
         frame = new JFrame();
         frame.setBounds(100, 100, 1080, 800);
@@ -106,21 +124,10 @@ public class MainView {
         minusBtn = makeSquareButton("-", 30);
         
         // Cell 1: panel for displaying email list
-        
-        /*
-         * Retrieve the email data list and make a DefaultListModel, which can
-         * automatically update view when changed.
-         */
-        DefaultListModel<String> emailListModel = new DefaultListModel<>();
-        
-        myEmailList.forEach(elt -> {
-            emailListModel.addElement(elt);
-        });
-        
         JPanel listPane = new JPanel();
         listPane.setLayout(new BoxLayout(listPane, BoxLayout.Y_AXIS));
         
-        JList<String> emailList = new JList<String>(emailListModel);
+        JList<String> emailList = new JList<String>(emailAddresses);
         emailList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(emailList);
         
@@ -150,7 +157,7 @@ public class MainView {
             if(checkValidAddress(s)) {
                 if (!myEmailList.contains(s)) {
                     myEmailList.add(s);
-                    emailListModel.addElement(s);
+                    emailAddresses.addElement(s);
                 }
             } else {
                 JOptionPane.showMessageDialog(frame, "The email address is not valid!");
@@ -165,7 +172,7 @@ public class MainView {
             int selectedIndex = emailList.getSelectedIndex();
             
             if(selectedEmail != null) {
-                emailListModel.remove(selectedIndex);
+                emailAddresses.remove(selectedIndex);
                 myEmailList.remove(selectedEmail);
             }
         });
