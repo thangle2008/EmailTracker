@@ -1,5 +1,7 @@
 package thangle.emailtracker;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
@@ -10,15 +12,20 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.util.HashSet;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileSystemView;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -38,11 +45,12 @@ public class MainView {
     
     // email data
     private HashSet<String> myEmailList;
+    private DefaultListModel<File> attachments;
     
     private JFrame frame;
     private JTextArea recipients, body;
     private JTextField subject;
-    private JButton sendBtn, plusBtn, minusBtn;
+    private JButton sendBtn, plusBtn, minusBtn, attachBtn;
     
     /**
      * Launch the application.
@@ -72,6 +80,8 @@ public class MainView {
         }
         else myEmailList = new HashSet<String>();
         
+        attachments = new DefaultListModel<>();
+        
         initialize();
     }
 
@@ -85,11 +95,13 @@ public class MainView {
         frame.getContentPane().setLayout(new GridLayout(1, 3));
         
         subject = new JTextField();
+        subject.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         recipients = makeWrapTextArea(0, 0);
         body = makeWrapTextArea(20, 5);
         
         // initialize necessary buttons
         sendBtn = new JButton("Send");
+        attachBtn = new JButton("Attach files");
         plusBtn = makeSquareButton("+", 30);
         minusBtn = makeSquareButton("-", 30);
         
@@ -165,8 +177,28 @@ public class MainView {
             String from = emailList.getSelectedValue();
             String to = recipients.getText();
             String subjectText = subject.getText();
-            String bodyText = body.getText();
-            MessageService.sendMessage(from, to, subjectText, bodyText);
+            String bodyText = body.getText();            
+            
+            // get the attachments
+            File[] files = new File[attachments.size()];
+            for (int i = 0; i < attachments.size(); i++) {
+                files[i] = attachments.getElementAt(i);
+            }
+                    
+            MessageService.sendMessage(from, to, subjectText, bodyText, files);
+        });
+        
+        /*
+         * Attach file to email.
+         */
+        attachBtn.addActionListener(e -> {
+            final JFileChooser fc = new JFileChooser();
+            int returnVal = fc.showOpenDialog(frame);
+            
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                File file = fc.getSelectedFile();
+                attachments.addElement(file);
+            }
         });
         
         // add components to frame
@@ -183,20 +215,43 @@ public class MainView {
         });
     }
     
+    /**
+     * Build the email composing form.
+     * @return the email composing panel
+     */
     private JPanel buildFormPanel() {
         FormLayout comLayout = new FormLayout(
                 "pref, 3dlu, pref:grow, 3dlu",
-                "pref, 3dlu, pref, 3dlu, default, 3dlu, pref");
+                "pref, 3dlu, pref, 3dlu, default, 3dlu, default, 3dlu, pref");
         PanelBuilder comBuilder = new PanelBuilder(comLayout);
         CellConstraints cc = new CellConstraints();
         
+        // add form fields
         comBuilder.addLabel("To:", cc.xy(1, 1, "left, top"));
         comBuilder.add(recipients, cc.xy(3, 1));
         comBuilder.addLabel("Subject:", cc.xy(1, 3, "left, center"));
         comBuilder.add(subject, cc.xy(3, 3));
         comBuilder.addLabel("Body:", cc.xy(1, 5, "left, top"));
         comBuilder.add(body, cc.xy(3, 5));
-        comBuilder.add(sendBtn, cc.xy(3, 7, "right, center"));
+        
+        comBuilder.addLabel("Attachments:", cc.xy(1, 7, "left, top"));
+        
+        // create the scroll pane for displaying attachments
+        JList<File> attachmentList = new JList<>(attachments);
+        attachmentList.setLayoutOrientation(JList.VERTICAL);
+        attachmentList.setCellRenderer(new FileListRenderer());
+        JScrollPane scrollPane = new JScrollPane(attachmentList);
+        scrollPane.setPreferredSize(new Dimension(0, 100));
+        
+        comBuilder.add(scrollPane, cc.xy(3, 7));
+        
+        // add button 
+        JPanel btnPane = new JPanel();
+        btnPane.setLayout(new BoxLayout(btnPane, BoxLayout.X_AXIS));
+        btnPane.add(attachBtn);
+        btnPane.add(sendBtn);
+        
+        comBuilder.add(btnPane, cc.xy(3, 9, "right, center"));
         
         JPanel comPane = comBuilder.getPanel();
         comPane.setBorder(new EmptyBorder(10, 10, 0, 0));
@@ -219,6 +274,7 @@ public class MainView {
         }
         area.setLineWrap(true);
         area.setWrapStyleWord(true);
+        area.setBorder(BorderFactory.createLineBorder(Color.GRAY));
         
         return area;
     }
@@ -256,5 +312,23 @@ public class MainView {
         }
         
         return true;
+    }
+    
+    private class FileListRenderer extends DefaultListCellRenderer {
+
+        @Override
+        public Component getListCellRendererComponent(JList<?> list,
+                                                      Object value,
+                                                      int index,
+                                                      boolean isSelected,
+                                                      boolean cellHasFocus) {
+            Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            JLabel l = (JLabel)c;
+            File f = (File)value;
+            l.setText(f.getName());
+            l.setIcon(FileSystemView.getFileSystemView().getSystemIcon(f));
+            
+            return l;
+        }
     }
 }
